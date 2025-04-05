@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEAFROAST SAGA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden;
+        }
+
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+            max-width: 80%;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin: 20px 0;
+            font-weight: 400;
+            line-height: 1.6;
+            animation: fadeIn 2.5s ease-in-out;
+        }
+
+        .cta-button {
+            background-color: #00B0FF;
+            color: white;
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: background-color 0.3s ease-in-out, transform 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            animation: fadeIn 3s ease-in-out;
+        }
+
+        .cta-button:hover {
+            background-color: #008CFF;
+            transform: scale(1.1);
+        }
+
+        .bubbles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: bubbleAnimation 15s infinite ease-in-out;
+        }
+
+        @keyframes bubbleAnimation {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0.4;
+            }
+            50% {
+                transform: translateY(-200px) scale(1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-600px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Music -->
+    <audio id="background-music" autoplay loop>
+        <source src="audio.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Button Click Sound -->
+    <audio id="button-click-sound">
+        <source src="click-sound.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <section class="hero">
+        <video autoplay muted loop>
+            <source src="game4.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="hero-content">
+            <h1>SEAFROAST SAGA</h1>
+            <p>Dive into an unforgettable underwater journey to protect the ocean and its creatures. Start your adventure now!</p>
+            <a href="signup.html" class="cta-button" onclick="playClickSound()">Start Your Journey</a>
+        </div>
+
+        <!-- Bubble Animation -->
+        <div class="bubbles">
+            <div class="bubble" style="left: 10%; width: 40px; height: 40px; animation-duration: 12s;"></div>
+            <div class="bubble" style="left: 25%; width: 50px; height: 50px; animation-duration: 10s;"></div>
+            <div class="bubble" style="left: 40%; width: 30px; height: 30px; animation-duration: 8s;"></div>
+            <div class="bubble" style="left: 60%; width: 60px; height: 60px; animation-duration: 15s;"></div>
+            <div class="bubble" style="left: 80%; width: 70px; height: 70px; animation-duration: 18s;"></div>
+            <div class="bubble" style="left: 15%; width: 30px; height: 30px; animation-duration: 9s;"></div>
+            <div class="bubble" style="left: 35%; width: 45px; height: 45px; animation-duration: 14s;"></div>
+            <div class="bubble" style="left: 50%; width: 25px; height: 25px; animation-duration: 11s;"></div>
+            <div class="bubble" style="left: 70%; width: 55px; height: 55px; animation-duration: 13s;"></div>
+            <div class="bubble" style="left: 90%; width: 65px; height: 65px; animation-duration: 17s;"></div>
+        </div>
+    </section>
+
+    <script>
+        function playClickSound() {
+            const clickSound = document.getElementById('button-click-sound');
+            clickSound.play().catch(error => console.log("Error playing click sound: ", error));
+        }
+
+        // Play background music after user interaction
+        document.addEventListener('click', () => {
+            const bgMusic = document.getElementById('background-music');
+            if (bgMusic.paused) {
+                bgMusic.play().catch(error => console.log("Error playing background music: ", error));
+            }
+        });
+    </script>
+</body>
+</html>
