@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shark Puzzle Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: url('sbackground.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    #gameContainer {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      background: #1E90FF;
+      border: 2px solid #000;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(12, 1fr);
+    }
+
+    .cell {
+      border: 1px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .obstacle {
+      background-color: red;
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .food {
+      background-color: green;
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #shark {
+      width: 100%;
+      height: 100%;
+      background-image: url('shark.png');
+      background-size: cover;
+      border-radius: 50%;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    #timer {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    #controls {
+      margin-top: 20px;
+    }
+
+    #congratsScreen, #questionScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 24px;
+      display: none;
+    }
+
+    #nextLevelButton, #submitAnswerButton {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #1E90FF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #nextLevelButton:hover, #submitAnswerButton:hover {
+      background-color: #4682B4;
+    }
+  </style>
+</head>
+<body>
+  <h1>Shark Puzzle Game</h1>
+  <div id="timer">Time: 0 seconds</div>
+  <div id="gameContainer"></div>
+  <div id="message">Move the shark using arrow keys! Avoid the obstacles!!</div>
+  <div id="controls">
+    <button id="pauseButton">Pause</button>
+    <button id="resumeButton" disabled>Resume</button>
+  </div>
+
+  <div id="congratsScreen">
+    <div>Congratulations! You've completed all levels!</div>
+    <button id="nextLevelButton">Go to Clownfish Game</button>
+  </div>
+
+  <div id="questionScreen">
+    <div id="question">What is the largest species of shark?</div>
+    <input type="text" id="answer" placeholder="Your answer here">
+    <button id="submitAnswerButton">Submit Answer</button>
+  </div>
+
+  <script>
+    const gameContainer = document.getElementById('gameContainer');
+    const message = document.getElementById('message');
+    const timerDisplay = document.getElementById('timer');
+    const pauseButton = document.getElementById('pauseButton');
+    const resumeButton = document.getElementById('resumeButton');
+    const congratsScreen = document.getElementById('congratsScreen');
+    const nextLevelButton = document.getElementById('nextLevelButton');
+    const questionScreen = document.getElementById('questionScreen');
+    const questionText = document.getElementById('question');
+    const answerInput = document.getElementById('answer');
+    const submitAnswerButton = document.getElementById('submitAnswerButton');
+
+    const GRID_SIZE = 12;
+    const sharkPosition = { x: 0, y: 0 };
+    const foodPosition = { x: 10, y: 10 };
+    let obstacles = [];
+    let timer = 0;
+    let timerInterval;
+    let obstacleInterval;
+    let isPaused = false;
+    let currentLevel = 1;
+
+    const questions = [
+      "What is the largest species of shark?", // Answer: Whale Shark
+      "How many rows of teeth can a Great White Shark have?", // Answer: Up to 300
+      "What is the fastest species of shark?" // Answer: Shortfin Mako
+    ];
+
+    const answers = [
+      "whale shark",
+      "up to 300",
+      "shortfin mako"
+    ];
+
+    function createGrid() {
+      gameContainer.innerHTML = '';
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          gameContainer.appendChild(cell);
+        }
+      }
+      updateSharkPosition();
+      placeFood();
+      placeObstacles();
+    }
+
+    function updateSharkPosition() {
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.id = '';
+      });
+
+      const sharkCell = document.querySelector(
+        `.cell[data-row='${sharkPosition.y}'][data-col='${sharkPosition.x}']`
+      );
+      if (sharkCell) sharkCell.id = 'shark';
+
+      // Check if shark reached food
+      if (sharkPosition.x === foodPosition.x && sharkPosition.y === foodPosition.y) {
+        showQuestionScreen();
+      }
+    }
+
+    function placeFood() {
+      const foodCell = document.querySelector(
+        `.cell[data-row='${foodPosition.y}'][data-col='${foodPosition.x}']`
+      );
+      if (foodCell) {
+        foodCell.classList.add('food');
+        foodCell.textContent = '🛡️';
+      }
+    }
+
+    function placeObstacles() {
+      obstacles.length = 0;
+      for (let i = 0; i < 10 + currentLevel * 5; i++) { // Increase obstacles per level
+        let obstacleX = Math.floor(Math.random() * GRID_SIZE);
+        let obstacleY = Math.floor(Math.random() * GRID_SIZE);
+
+        if (
+          (obstacleX !== sharkPosition.x || obstacleY !== sharkPosition.y) &&
+          (obstacleX !== foodPosition.x || obstacleY !== foodPosition.y)
+        ) {
+          obstacles.push({ x: obstacleX, y: obstacleY });
+          const obstacleCell = document.querySelector(
+            `.cell[data-row='${obstacleY}'][data-col='${obstacleX}']`
+          );
+          if (obstacleCell) {
+            obstacleCell.classList.add('obstacle');
+            obstacleCell.textContent = Math.random() > 0.5 ? '🚢' : '🛍️';
+          }
+        }
+      }
+    }
+
+    function updateObstacles() {
+      document.querySelectorAll('.obstacle').forEach(cell => {
+        cell.classList.remove('obstacle');
+        cell.textContent = '';
+      });
+
+      placeObstacles();
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          timer++;
+          timerDisplay.textContent = `Time: ${timer} seconds`;
+        }
+      }, 1000);
+
+      obstacleInterval = setInterval(() => {
+        if (!isPaused) {
+          updateObstacles();
+        }
+      }, 3000 - currentLevel * 500); // Faster obstacles each level
+    }
+
+    function pauseGame() {
+      isPaused = true;
+      pauseButton.disabled = true;
+      resumeButton.disabled = false;
+    }
+
+    function resumeGame() {
+      isPaused = false;
+      pauseButton.disabled = false;
+      resumeButton.disabled = true;
+    }
+
+    function showQuestionScreen() {
+      clearInterval(timerInterval);
+      clearInterval(obstacleInterval);
+      questionScreen.style.display = 'flex';
+      questionText.textContent = questions[currentLevel - 1];
+    }
+
+    function checkAnswer() {
+      const userAnswer = answerInput.value.toLowerCase().trim();
+      if (userAnswer === answers[currentLevel - 1]) {
+        currentLevel++;
+        questionScreen.style.display = 'none';
+        if (currentLevel > 3) {
+          showCongratsScreen();
+        } else {
+          createGrid();
+          startTimer();
+        }
+      } else {
+        message.textContent = 'Incorrect answer. Try again!';
+      }
+    }
+
+    function showCongratsScreen() {
+      congratsScreen.style.display = 'flex';
+    }
+
+    nextLevelButton.addEventListener('click', () => {
+      window.location.href = 'clownfish-story.html';
+    });
+
+    submitAnswerButton.addEventListener('click', checkAnswer);
+
+    document.addEventListener('keydown', (e) => {
+      if (isPaused) return;
+
+      let newX = sharkPosition.x;
+      let newY = sharkPosition.y;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          newY = Math.max(0, sharkPosition.y - 1);
+          break;
+        case 'ArrowDown':
+          newY = Math.min(GRID_SIZE - 1, sharkPosition.y + 1);
+          break;
+        case 'ArrowLeft':
+          newX = Math.max(0, sharkPosition.x - 1);
+          break;
+        case 'ArrowRight':
+          newX = Math.min(GRID_SIZE - 1, sharkPosition.x + 1);
+          break;
+      }
+
+      if (!obstacles.some((ob) => ob.x === newX && ob.y === newY)) {
+        sharkPosition.x = newX;
+        sharkPosition.y = newY;
+        updateSharkPosition();
+      } else {
+        message.textContent = 'You hit an obstacle! Try another direction.';
+      }
+    });
+
+    pauseButton.addEventListener('click', pauseGame);
+    resumeButton.addEventListener('click', resumeGame);
+
+    createGrid();
+    startTimer();
+  </script>
+</body>
+</html>
