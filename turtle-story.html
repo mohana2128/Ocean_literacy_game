@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Turtle's Story</title>
+  <link rel="stylesheet" href="story_styles.css">
+</head>
+<body>
+  
+  <div id="container">
+    <!-- Background Video -->
+    <video autoplay loop muted id="background-video">
+      <source src="Turtle_video.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <!-- Story Text Area -->
+    <div id="story-area">
+      <h1>The Story of Green Turtles</h1>
+      <p id="story-text"></p>
+    </div>
+
+    <!-- Narration Control -->
+    <button id="mute-button" onclick="toggleVoice()">🔊 Mute/Unmute</button>
+
+    <!-- Start Game Button -->
+    <a href="Turtle-game.html" id="start-game-button">Start Game</a>
+  </div>
+
+  <script src="story_script.js"></script>
+</body>
+</html>

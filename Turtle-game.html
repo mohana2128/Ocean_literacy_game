@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocean Awareness Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #2869e9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .game-container {
+      position: relative;
+      text-align: center;
+    }
+
+    canvas {
+      display: block;
+      border: 2px solid #000;
+    }
+
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #pauseButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #introScreen, #gameOverScreen, #congratulationsScreen {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+      font-size: 24px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    #gameOverScreen button, #congratulationsScreen button, #introScreen button {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <audio id="background-music" autoplay loop>
+    <source src="audio.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
+
+  <audio id="button-click-sound">
+    <source src="click-sound.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
+
+  <audio id="collision-sound">
+    <source src="collision-sound.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
+
+  <div class="game-container">
+    <div id="info">
+      Score: <span id="score">0</span> | Lives: <span id="lives">3</span> | Time: <span id="timer">00:00</span>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <button id="startButton">Start Game</button>
+    <button id="pauseButton">Pause</button>
+
+    <div id="introScreen">
+      <h2>Welcome to the Ocean Awareness Game!</h2>
+      <p>Help the turtle collect food (<span>🌿</span>) to score points.</p>
+      <p>Avoid trash (<span>🗑️</span>) to preserve lives.</p>
+      <p>Use the arrow keys to move:</p>
+      <ul>
+        <li><strong>Up</strong>: Move up</li>
+        <li><strong>Down</strong>: Move down</li>
+        <li><strong>Left</strong>: Move left</li>
+        <li><strong>Right</strong>: Move right</li>
+      </ul>
+      <button id="startIntroButton">Start Game</button>
+    </div>
+
+    <div id="gameOverScreen">
+      <p>Game Over! Final Score: <span id="finalScore">0</span></p>
+      <button id="restartButton">Restart Game</button>
+    </div>
+
+    <div id="congratulation">
+      <p>Congratulations! You've helped the turtle reach its goal!</p>
+      <p>Your Final Score: <span id="finalCongratulationScore">0</span></p>
+      <button id="nextLevelButton">Next Level</button>
+      <button id="restartFromCongratsButton">Restart Game</button>
+    </div>
+  </div>
+
+  <script>
+    function playClickSound() {
+      const clickSound = document.getElementById('button-click-sound');
+      clickSound.play().catch(error => console.log("Error playing click sound: ", error));
+    }
+
+    function playCollisionSound() {
+      const collisionSound = document.getElementById('collision-sound');
+      collisionSound.play().catch(error => console.log("Error playing collision sound: ", error));
+    }
+
+    document.addEventListener('click', () => {
+      const bgMusic = document.getElementById('background-music');
+      if (bgMusic.paused) {
+        bgMusic.play().catch(error => console.log("Error playing background music: ", error));
+      }
+    });
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const startButton = document.getElementById("startButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const introScreen = document.getElementById("introScreen");
+    const startIntroButton = document.getElementById("startIntroButton");
+
+    const scoreDisplay = document.getElementById("score");
+    const livesDisplay = document.getElementById("lives");
+    const timerDisplay = document.getElementById("timer");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const finalScoreDisplay = document.getElementById("finalScore");
+    const restartButton = document.getElementById("restartButton");
+
+    const congratulationsScreen = document.getElementById("congratulationsScreen");
+    const finalCongratulationScoreDisplay = document.getElementById("finalCongratulationScore");
+    const nextLevelButton = document.getElementById("nextLevelButton");
+    const restartFromCongratsButton = document.getElementById("restartFromCongratsButton");
+
+    canvas.width = 1400;
+    canvas.height = 600;
+
+    let score = 0;
+    let lives = 3;
+    let gameRunning = false;
+    let isPaused = false;
+    let timeElapsed = 0;
+    let lastUpdateTime = Date.now();
+
+    const playerEmoji = "🐢";
+    const foodEmoji = "🌿";
+    const trashEmoji = "🗑️";
+    const backgroundImage = new Image();
+    backgroundImage.src = "gbackground.jpg";
+
+    const player = {
+      x: 100,
+      y: canvas.height / 2,
+      width: 80, 
+      height: 80, 
+      speed: 8,
+      dx: 0,
+      dy: 0,
+    };
+
+    const foodItems = [];
+    const trashItems = [];
+
+    function generateItem(isTrash) {
+      return {
+        x: canvas.width,
+        y: Math.random() * (canvas.height - 50),
+        width: 50,
+        height: 50,
+        type: isTrash ? "trash" : "food",
+        emoji: isTrash ? trashEmoji : foodEmoji,
+        speed: Math.random() * 3 + 2,
+        angle: Math.random() * Math.PI * 2,
+        rotationSpeed: Math.random() * 0.05 + 0.02,
+      };
+    }
+
+    function drawPlayer() {
+      ctx.font = "70px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(playerEmoji, player.x + player.width / 2, player.y + player.height);
+    }
+
+    function drawItems(items) {
+      ctx.font = "40px Arial";
+      ctx.textAlign = "center";
+      items.forEach((item) => {
+        ctx.save();
+        ctx.translate(item.x + item.width / 2, item.y + item.height / 2);
+        ctx.rotate(item.angle);
+        ctx.fillText(item.emoji, 0, 0);
+        ctx.restore();
+        item.angle += item.rotationSpeed;
+      });
+    }
+
+    function updateItems(items) {
+      items.forEach((item, index) => {
+        item.x -= item.speed;
+
+        if (
+          player.x < item.x + item.width &&
+          player.x + player.width > item.x &&
+          player.y < item.y + item.height &&
+          player.y + player.height > item.y
+        ) {
+          if (item.type === "food") {
+            score += 10;
+            scoreDisplay.textContent = score;
+          } else {
+            lives -= 1;
+            livesDisplay.textContent = lives;
+            playCollisionSound();
+            if (lives === 0) {
+              gameOver();
+            }
+          }
+          items.splice(index, 1);
+        }
+
+        if (item.x + item.width < 0) {
+          items.splice(index, 1);
+        }
+      });
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      finalScoreDisplay.textContent = score;
+      gameOverScreen.style.display = "block";
+    }
+
+    function showCongratulationsScreen() {
+      gameRunning = false;
+      finalCongratulationScoreDisplay.textContent = score;
+      congratulationsScreen.style.display = "block";
+    }
+
+    function gameLoop() {
+      if (!gameRunning || isPaused) return;
+
+      const now = Date.now();
+      const deltaTime = now - lastUpdateTime;
+      lastUpdateTime = now;
+
+      timeElapsed += deltaTime;
+      const seconds = Math.floor(timeElapsed / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+
+      ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+      drawPlayer();
+
+      if (Math.random() < 0.02) foodItems.push(generateItem(false));
+      if (Math.random() < 0.01) trashItems.push(generateItem(true));
+
+      drawItems(foodItems);
+      drawItems(trashItems);
+
+      updateItems(foodItems);
+      updateItems(trashItems);
+
+      player.x += player.dx;
+      player.y += player.dy;
+
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+      if (player.y < 0) player.y = 0;
+      if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+
+      if (score > 100) {
+        showCongratulationsScreen();
+        return;
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      score = 0;
+      lives = 3;
+      timeElapsed = 0;
+      scoreDisplay.textContent = score;
+      livesDisplay.textContent = lives;
+      timerDisplay.textContent = "00:00";
+      foodItems.length = 0;
+      trashItems.length = 0;
+      gameRunning = true;
+      gameOverScreen.style.display = "none";
+      congratulationsScreen.style.display = "none";
+      gameLoop();
+    }
+
+    function togglePause() {
+      isPaused = !isPaused;
+      pauseButton.textContent = isPaused ? "Resume" : "Pause";
+
+      if (!isPaused) {
+        lastUpdateTime = Date.now();
+        gameLoop();
+      }
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") player.dy = -player.speed;
+      if (e.key === "ArrowDown") player.dy = player.speed;
+      if (e.key === "ArrowLeft") player.dx = -player.speed;
+      if (e.key === "ArrowRight") player.dx = player.speed;
+    });
+
+    window.addEventListener("keyup", () => {
+      player.dy = 0;
+      player.dx = 0;
+    });
+
+    startButton.addEventListener("click", startGame);
+    startIntroButton.addEventListener("click", () => {
+      introScreen.style.display = "none";
+      startGame();
+    });
+    pauseButton.addEventListener("click", togglePause);
+    restartButton.addEventListener("click", startGame);
+    restartFromCongratsButton.addEventListener("click", startGame);
+    nextLevelButton.addEventListener("click", () => {
+      alert("Proceeding to the next level!");
+      window.location.href = "vaquita-story.html";
+    });
+
+    introScreen.style.display = "block";
+  </script>
+</body>
+</html>
