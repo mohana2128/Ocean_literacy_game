@@ -147,7 +147,7 @@
 </head>
 <body>
   <video autoplay muted loop class="background-video">
-    <source src="images\game4.mp4" type="video/mp4">
+    <source src="videos/game4.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 
@@ -363,14 +363,7 @@
       }
     }
 
-    function gameOver(message) {
-      clearInterval(predatorInterval);
-      clearInterval(gameTimer);
-      clearInterval(elapsedTimer);
-      backgroundMusic.pause();
-      alert(message);
-      resetGame();
-    }
+    
 
     function winGame() {
       clearInterval(predatorInterval);
@@ -378,7 +371,12 @@
       clearInterval(elapsedTimer);
       backgroundMusic.pause();
       popup.style.display = "block";
-    }
+      setTimeout(() => {
+    window.location.href = "memp.html"; // Redirect to mem.html
+  }, 1000); // Redirect after 1 second delay (adjust the delay as needed)
+}
+
+    
 
     function restartGame() {
       popup.style.display = "none";

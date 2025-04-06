@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vaquita's Story</title>
+  <link rel="stylesheet" href="story_styles.css">
+</head>
+<body>
+  
+  <div id="container">
+    <!-- Background Video -->
+    <video autoplay loop muted id="background-video">
+      <source src="videos/vaquita_video.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <!-- Story Text Area -->
+    <div id="story-area">
+      <h1>The Story of Vaquitas</h1>
+      <p id="story-text">
+        Vaquitas, the world's most endangered marine mammal, have been pushed to the brink of extinction. These small porpoises are found exclusively in the northern part of the Gulf of California, Mexico. 
+        Their population has plummeted due to bycatch in gillnets used for illegal fishing of the Totoaba fish, whose swim bladder is highly valued in certain markets. 
+        With fewer than 10 individuals remaining, immediate action is critical to save them from vanishing forever.
+      </p>
+    </div>
+
+    <!-- Narration Control -->
+    <button id="mute-button" onclick="toggleVoice()">🔊 Mute/Unmute</button>
+
+    <!-- Start Game Button -->
+    <a href="Vaquita-game.html" id="start-game-button">Start Game</a>
+  </div>
+
+  <script src="vaquita_script.js"></script>
+</body>
+</html>
