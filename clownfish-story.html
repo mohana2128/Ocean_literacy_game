@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clownfish's Journey</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    #background-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #story-area {
+      position: absolute;
+      top: 20%;
+      left: 10%;
+      width: 80%;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.7);
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    #story-text {
+      font-size: 1.5em;
+      margin-top: 20px;
+    }
+
+    #mute-button, #start-game-button {
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 30px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #start-game-button {
+      bottom: 5%;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    #mute-button:hover, #start-game-button:hover {
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Background Video -->
+    <video autoplay loop muted id="background-video">
+      <source src="clownfish_video.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <!-- Story Text Area -->
+    <div id="story-area">
+      <h1>The Story of Clownfish</h1>
+      <p id="story-text"></p>
+    </div>
+
+    <!-- Narration Control -->
+    <button id="mute-button" onclick="toggleVoice()">🔊 Mute/Unmute</button>
+
+    <!-- Start Game Button -->
+    <a href="clownfish-game.html" id="start-game-button">Start Game</a>
+  </div>
+
+  <script>
+    const storyText = document.getElementById("story-text");
+    const muteButton = document.getElementById("mute-button");
+
+    const storyLines = [
+      "Clownfish are small but remarkable creatures of the sea, known for their vibrant orange and white stripes.",
+      "They share a unique bond with sea anemones, forming a symbiotic relationship that protects them both.",
+      "Clownfish lay their eggs near anemones, where they are shielded from predators.",
+      "However, coral bleaching and ocean pollution are threatening the habitats that clownfish call home.",
+      "As reefs disappear, the delicate balance of marine life is disrupted, putting clownfish at risk.",
+      "We must act to preserve coral reefs and marine ecosystems to secure the future of clownfish and countless other species."
+    ];
+
+    let lineIndex = 0;
+    let narrationActive = true;
+
+    // Narration setup
+    const narration = new SpeechSynthesisUtterance();
+    narration.lang = "en-US";
+    narration.rate = 1;
+
+    // Start the narration
+    function startNarration() {
+      if (lineIndex < storyLines.length && narrationActive) {
+        narration.text = storyLines[lineIndex];
+        speechSynthesis.speak(narration);
+
+        storyText.innerHTML = storyLines[lineIndex];
+        lineIndex++;
+
+        narration.onend = startNarration;
+      } else {
+        narration.onend = null; // Stop callback when narration ends
+      }
+    }
+
+    // Mute/Unmute toggle
+    function toggleVoice() {
+      if (narrationActive) {
+        speechSynthesis.cancel();
+        narrationActive = false;
+        muteButton.innerHTML = "🔈 Unmute";
+      } else {
+        narrationActive = true;
+        muteButton.innerHTML = "🔊 Mute";
+        startNarration(); // Resume narration
+      }
+    }
+
+    // Start the narration automatically
+    startNarration();
+  </script>
+</body>
+</html>
