@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fish Feeding Frenzy</title>
+  <style>
+    /* Your existing styles */
+    /* Additional styles for pause/resume button */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #87CEEB;
+    }
+
+    .background-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    #gameContainer {
+      width: 600px;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.85);
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #0074D9;
+    }
+
+    #scoreBoard {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(10, 50px);
+      grid-gap: 5px;
+      background-color: rgba(0, 105, 148, 0.9);
+      padding: 5px;
+      border-radius: 5px;
+    }
+
+    .tile {
+      width: 50px;
+      height: 50px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      color: white;
+    }
+
+    .fish {
+      background-color: #2ECC40;
+    }
+
+    .food {
+      background-color: #FFD700;
+    }
+
+    .human {
+      background-color: #FF4136;
+    }
+
+    .powerup {
+      background-color: #7D3C98;
+    }
+
+    .empty {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #0074D9;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #005F9E;
+    }
+
+    #messageBox {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #FF4136;
+      font-weight: bold;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .popup h2 {
+      color: #2ECC40;
+    }
+    #pauseButton {
+      margin-left: 10px;
+      padding: 10px 20px;
+      background-color: #FF851B;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #pauseButton:hover {
+      background-color: #D44A06;
+    }
+  </style>
+</head>
+<body>
+  <video autoplay muted loop class="background-video">
+    <source src="game4.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <div id="gameContainer">
+    <h1>Fish Feeding Frenzy</h1>
+    <div id="scoreBoard">
+      <span>Score: <span id="score">0</span></span>
+      <span>HP: <span id="health">3</span></span>
+      <span>Time: <span id="timer">60</span></span>
+      <span>Elapsed: <span id="elapsed">0</span>s</span>
+    </div>
+    <div id="gameBoard"></div>
+    <button id="startButton">Start Game</button>
+    <button id="pauseButton" style="display: none;">Pause</button>
+    <div id="messageBox"></div>
+  </div>
+
+  <div id="popup" class="popup" style="display: none;">
+    <h2>Congratulations! You Won!</h2>
+    <p>You have successfully completed the game. 🎉 </p>
+    <p>Save the endangered species in real life also!! </p>
+    <button onclick="restartGame()">Play Again</button>
+  </div>
+
+  <audio id="backgroundMusic" src="game.mp3" loop></audio>
+  <audio id="earnSound" src="earn.mp3"></audio>
+  <audio id="predatorSound" src="predator.mp3"></audio>
+  <audio id="powerupSound" src="powerup.mp3"></audio>
+
+  <script>
+    const boardSize = 10;
+    let board = [];
+    let fishPosition = { row: 0, col: 0 };
+    let score = 0;
+    let health = 3;
+    let timer = 60;
+    let elapsed = 0;
+    let level = 1;
+    let predatorInterval, gameTimer, elapsedTimer;
+    let isPaused = false;
+
+    const gameBoard = document.getElementById("gameBoard");
+    const scoreElement = document.getElementById("score");
+    const healthElement = document.getElementById("health");
+    const timerElement = document.getElementById("timer");
+    const elapsedElement = document.getElementById("elapsed");
+    const startButton = document.getElementById("startButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const popup = document.getElementById("popup");
+
+    const backgroundMusic = document.getElementById("backgroundMusic");
+    const earnSound = document.getElementById("earnSound");
+    const predatorSound = document.getElementById("predatorSound");
+    const powerupSound = document.getElementById("powerupSound");
+
+    function generateBoard() {
+      board = Array.from({ length: boardSize }, () => Array(boardSize).fill("empty"));
+      fishPosition = { row: Math.floor(Math.random() * boardSize), col: Math.floor(Math.random() * boardSize) };
+      board[fishPosition.row][fishPosition.col] = "fish";
+
+      for (let i = 0; i < 5 + level; i++) placeRandomTile("food");
+      for (let i = 0; i < 3 + level; i++) placeRandomTile("human");
+      if (Math.random() > 0.5) placeRandomTile("powerup");
+    }
+
+    function placeRandomTile(type) {
+      let row, col;
+      do {
+        row = Math.floor(Math.random() * boardSize);
+        col = Math.floor(Math.random() * boardSize);
+      } while (board[row][col] !== "empty");
+      board[row][col] = type;
+    }
+
+    function renderBoard() {
+      gameBoard.innerHTML = "";
+      board.forEach(row => {
+        row.forEach(tile => {
+          const tileDiv = document.createElement("div");
+          tileDiv.className = `tile ${tile}`;
+          switch (tile) {
+            case "fish": tileDiv.textContent = "🐠"; break;
+            case "food": tileDiv.textContent = "🍤"; break;
+            case "human": tileDiv.textContent = "🏊‍♀️"; break;
+            case "powerup": tileDiv.textContent = "⭐"; break;
+            default: tileDiv.textContent = ""; break;
+          }
+          gameBoard.appendChild(tileDiv);
+        });
+      });
+    }
+
+    function moveFish(direction) {
+      if (isPaused) return;
+
+      const { row, col } = fishPosition;
+      let newRow = row, newCol = col;
+
+      if (direction === "up" && row > 0) newRow--;
+      if (direction === "down" && row < boardSize - 1) newRow++;
+      if (direction === "left" && col > 0) newCol--;
+      if (direction === "right" && col < boardSize - 1) newCol++;
+
+      const nextTile = board[newRow][newCol];
+      if (nextTile === "human") {
+        health--;
+        predatorSound.play();
+        if (health === 0) {
+          gameOver("Game Over! Try again!");
+          return;
+        }
+      } else if (nextTile === "food") {
+        score += 10;
+        earnSound.play();
+      } else if (nextTile === "powerup") {
+        score += 20;
+        powerupSound.play();
+        health = Math.min(health + 1, 5);
+      }
+
+      board[row][col] = "empty";
+      board[newRow][newCol] = "fish";
+      fishPosition = { row: newRow, col: newCol };
+
+      if (!board.some(row => row.includes("food"))) {
+        level++;
+        if (level > 3) {
+          winGame();
+          return;
+        }
+        generateBoard();
+      }
+
+      renderBoard();
+      updateStats();
+    }
+
+    function movePredators() {
+      if (isPaused) return;
+
+      const predators = [];
+      board.forEach((row, rIdx) => {
+        row.forEach((tile, cIdx) => {
+          if (tile === "human") predators.push({ row: rIdx, col: cIdx });
+        });
+      });
+
+      predators.forEach(({ row, col }) => {
+        board[row][col] = "empty";
+        const directions = [
+          { dr: -1, dc: 0 }, { dr: 1, dc: 0 }, { dr: 0, dc: -1 }, { dr: 0, dc: 1 }
+        ];
+        let moved = false;
+
+        while (!moved && directions.length > 0) {
+          const { dr, dc } = directions.splice(Math.random() * directions.length, 1)[0];
+          const newRow = row + dr, newCol = col + dc;
+          if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && board[newRow][newCol] !== "human") {
+            if (board[newRow][newCol] === "fish") {
+              health--;
+              predatorSound.play();
+              if (health === 0) {
+                gameOver("Game Over! Try again!");
+                return;
+              }
+            }
+            board[newRow][newCol] = "human";
+            moved = true;
+          }
+        }
+      });
+
+      renderBoard();
+    }
+
+    function updateStats() {
+      scoreElement.textContent = score;
+      healthElement.textContent = health;
+      timerElement.textContent = timer;
+      elapsedElement.textContent = elapsed;
+    }
+
+    function startTimer() {
+      clearInterval(gameTimer);
+      clearInterval(elapsedTimer);
+      timer = 60;
+      elapsed = 0;
+
+      gameTimer = setInterval(() => {
+        if (!isPaused) {
+          timer--;
+          if (timer === 0) {
+            clearInterval(gameTimer);
+            gameOver("Time's up! Game Over!");
+          }
+          timerElement.textContent = timer;
+        }
+      }, 1000);
+
+      elapsedTimer = setInterval(() => {
+        if (!isPaused) elapsed++;
+        elapsedElement.textContent = elapsed;
+      }, 1000);
+    }
+
+    function togglePause() {
+      isPaused = !isPaused;
+      pauseButton.textContent = isPaused ? "Resume" : "Pause";
+      if (isPaused) {
+        backgroundMusic.pause();
+      } else {
+        backgroundMusic.play();
+      }
+    }
+
+    function gameOver(message) {
+      clearInterval(predatorInterval);
+      clearInterval(gameTimer);
+      clearInterval(elapsedTimer);
+      backgroundMusic.pause();
+      alert(message);
+      resetGame();
+    }
+
+    function winGame() {
+      clearInterval(predatorInterval);
+      clearInterval(gameTimer);
+      clearInterval(elapsedTimer);
+      backgroundMusic.pause();
+      popup.style.display = "block";
+    }
+
+    function restartGame() {
+      popup.style.display = "none";
+      resetGame();
+    }
+
+    function resetGame() {
+      score = 0;
+      health = 3;
+      level = 1;
+      generateBoard();
+      renderBoard();
+      updateStats();
+      startTimer();
+      predatorInterval = setInterval(movePredators, 1000);
+      pauseButton.style.display = "inline-block";
+      backgroundMusic.play();
+    }
+
+    startButton.addEventListener("click", resetGame);
+    pauseButton.addEventListener("click", togglePause);
+
+    document.addEventListener("keydown", (e) => {
+      if (!isPaused) {
+        if (e.key === "ArrowUp") moveFish("up");
+        if (e.key === "ArrowDown") moveFish("down");
+        if (e.key === "ArrowLeft") moveFish("left");
+        if (e.key === "ArrowRight") moveFish("right");
+      }
+    });
+  </script>
+</body>
+</html>
