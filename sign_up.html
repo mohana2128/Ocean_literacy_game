@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protectors - Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .login-page {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .background-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .login-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            width: 350px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-container h2 {
+            font-size: 2rem;
+            font-family: 'Poppins', sans-serif;
+            color: #00ffa6;
+            margin-bottom: 20px;
+        }
+
+        .login-container form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-container input {
+            margin-bottom: 15px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .login-container a.button {
+            display: inline-block;
+            text-align: center;
+            background-color: #00B0FF;
+            color: white;
+            font-size: 1.2rem;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+            margin-top: 15px;
+        }
+
+        .login-container a.button:hover {
+            background-color: #008CFF;
+        }
+
+        .login-container .switch {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #0c0b0b;
+        }
+
+        .login-container .switch a {
+            color: #00ff51;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .gif-container {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        .gif-container img {
+            width: 950px;
+            height: auto;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(-50%, -10px); }
+            50% { transform: translate(-50%, 10px); }
+        }
+    </style>
+</head>
+<body>
+    <audio id="background-music" autoplay loop>
+        <source src="audio.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio id="button-click-sound">
+        <source src="click-sound.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <section class="login-page">
+        <video class="background-video" autoplay muted loop>
+            <source src="images/game4.mp4" type="video/mp4">
+            Your browser does not support the video element.
+        </video>
+
+        <div class="gif-container">
+            <img src="login.gif" alt="Dolphin GIF">
+        </div>
+
+        <div class="login-container">
+            <h2>Create Account</h2>
+            <form>
+                <input type="text" placeholder="Full Name" required>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Password" required>
+                <a href="species.html" class="button" onclick="playClickSound()">Sign Up</a>
+                <p>or</p>
+                <p class="switch">Already have an account? <a href="signup.html">Login</a></p>
+            </form>
+        </div>
+    </section>
+
+    <script>
+        function playClickSound() {
+            const clickSound = document.getElementById('button-click-sound');
+            clickSound.play().catch(error => console.log("Error playing click sound: ", error));
+        }
+
+        document.addEventListener('click', () => {
+            const bgMusic = document.getElementById('background-music');
+            if (bgMusic.paused) {
+                bgMusic.play().catch(error => console.log("Error playing background music: ", error));
+            }
+        });
+    </script>
+</body>
+</html>
